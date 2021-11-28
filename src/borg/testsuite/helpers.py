@@ -234,6 +234,12 @@ class TestLocationWithoutEnv:
             # this is invalid due to the 2nd colon, correct: 'ssh://user@host/path'
             Location('ssh://user@host:/path')
 
+    def test_omit_archive(self):
+        loc = Location('ssh://user@host:1234/some/path::archive')
+        loc_without_archive = loc.omit_archive()
+        assert loc_without_archive.archive is None
+        assert loc_without_archive.orig == "ssh://user@host:1234/some/path"
+
 
 class TestLocationWithEnv:
     def test_ssh(self, monkeypatch):
@@ -437,6 +443,19 @@ def test_prune_split_keep_oldest():
     assert set(keep) == subset(archives, [3, 4])
     assert kept_because[3][0] == "yearly"
     assert kept_because[4][0] == "yearly"
+
+
+def test_prune_split_no_archives():
+    def subset(lst, ids):
+        return {i for i in lst if i.id in ids}
+
+    archives = []
+
+    kept_because = {}
+    keep = prune_split(archives, "yearly", 3, kept_because)
+
+    assert keep == []
+    assert kept_because == {}
 
 
 class IntervalTestCase(BaseTestCase):

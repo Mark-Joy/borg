@@ -49,6 +49,8 @@ def prune_split(archives, rule, n, kept_because=None):
         kept_because = {}
     if n == 0:
         return keep
+
+    a = None
     for a in sorted(archives, key=attrgetter('ts'), reverse=True):
         period = to_localtime(a.ts).strftime(pattern)
         if period != last:
@@ -59,7 +61,7 @@ def prune_split(archives, rule, n, kept_because=None):
                 if len(keep) == n:
                     break
     # Keep oldest archive if we didn't reach the target retention count
-    if len(keep) < n and a.id not in kept_because:
+    if a is not None and len(keep) < n and a.id not in kept_because:
         keep.append(a)
         kept_because[a.id] = (rule+"[oldest]", len(keep))
     return keep
@@ -79,11 +81,7 @@ def sysinfo():
     except AttributeError:
         uname = None
     if sys.platform.startswith('linux'):
-        try:
-            linux_distribution = platform.linux_distribution()  # noqa
-        except:
-            # platform.linux_distribution() is deprecated since py 3.5 and removed in 3.7.
-            linux_distribution = ('Unknown Linux', '', '')
+        linux_distribution = ('Unknown Linux', '', '')
     else:
         linux_distribution = None
     try:
