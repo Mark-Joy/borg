@@ -783,6 +783,7 @@ Duration: {0.duration}
         *,
         restore_attrs=True,
         dry_run=False,
+        useop=False,
         stdout=False,
         sparse=False,
         hlm=None,
@@ -795,6 +796,7 @@ Duration: {0.duration}
         :param item: the item to extract
         :param restore_attrs: restore file attributes
         :param dry_run: do not write any data
+        :param useop: extract the content to its original path where it was backup from
         :param stdout: write extracted data to stdout
         :param sparse: write sparse files (chunk-granularity, independent of the original being sparse)
         :param hlm: maps hlid to link_target for extracting subtrees with hardlinks correctly
@@ -851,8 +853,12 @@ Duration: {0.duration}
                 raise BackupError("File has damaged (all-zero) chunks. Try running borg check --repair.")
             return
 
-        dest = self.cwd
-        path = os.path.join(dest, item.path)
+        if useop:
+            saved_path = item.orig_path
+            path = item.orig_path
+        else:
+            saved_path = item.path
+            path = os.path.join(self.cwd, item.path)
         # Attempt to remove existing files, ignore errors on failure
         try:
             st = os.stat(path, follow_symlinks=False)
@@ -885,7 +891,7 @@ Duration: {0.duration}
                     ids = [c.id for c in item.chunks]
                     for data in self.pipeline.fetch_many(ids, is_preloaded=True, ro_type=ROBJ_FILE_STREAM):
                         if pi:
-                            pi.show(increase=len(data), info=[remove_surrogates(item.path)])
+                            pi.show(increase=len(data), info=[remove_surrogates(saved_path)])
                         with backup_io("write"):
                             if sparse and zeros.startswith(data):
                                 # all-zero chunk: create a hole in a sparse file
@@ -1378,7 +1384,7 @@ class FilesystemObjectProcessors:
     @contextmanager
     def create_helper(self, path, st, status=None, hardlinkable=True):
         sanitized_path = remove_dotdot_prefixes(path)
-        item = Item(path=sanitized_path)
+        item = Item(orig_path=path, path=sanitized_path)
         hardlinked = hardlinkable and st.st_nlink > 1
         hl_chunks = None
         update_map = False
