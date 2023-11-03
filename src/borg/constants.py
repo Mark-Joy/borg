@@ -1,9 +1,8 @@
 # this set must be kept complete, otherwise the RobustUnpacker might malfunction:
 # fmt: off
-ITEM_KEYS = frozenset(['path', 'source', 'target', 'rdev', 'chunks', 'chunks_healthy', 'hardlink_master', 'hlid',
-                       'mode', 'user', 'group', 'uid', 'gid', 'mtime', 'atime', 'ctime', 'birthtime', 'size',
-                       'xattrs', 'bsdflags', 'acl_nfs4', 'acl_access', 'acl_default', 'acl_extended',
-                       'part'])
+ITEM_KEYS = frozenset(['orig_path', 'path', 'source', 'target', 'rdev', 'chunks', 'chunks_healthy', 'hardlink_master',
+                       'hlid', 'mode', 'user', 'group', 'uid', 'gid', 'mtime', 'atime', 'ctime', 'birthtime', 'size',
+                       'xattrs', 'bsdflags', 'acl_nfs4', 'acl_access', 'acl_default', 'acl_extended', 'part'])
 # fmt: on
 
 # this is the set of keys that are always present in items:
