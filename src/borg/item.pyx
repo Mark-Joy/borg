@@ -263,8 +263,10 @@ cdef class Item(PropDict):
 
     # properties statically defined, so that IDEs can know their names:
 
+    orig_path = PropDictProperty(str, 'surrogate-escaped str')
     path = PropDictProperty(str, 'surrogate-escaped str', encode=assert_sanitized_path, decode=to_sanitized_path)
-    source = PropDictProperty(str, 'surrogate-escaped str')  # legacy borg 1.x. borg 2: see .target
+    # legacy borg 1.x. borg 2: see .target https://github.com/borgbackup/borg/issues/7245
+    source = PropDictProperty(str, 'surrogate-escaped str')
     target = PropDictProperty(str, 'surrogate-escaped str')
     user = PropDictProperty(str, 'surrogate-escaped str')
     group = PropDictProperty(str, 'surrogate-escaped str')

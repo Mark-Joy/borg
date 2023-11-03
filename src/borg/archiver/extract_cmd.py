@@ -39,6 +39,7 @@ class ExtractMixIn:
         progress = args.progress
         output_list = args.output_list
         dry_run = args.dry_run
+        useop = args.useop
         stdout = args.stdout
         sparse = args.sparse
         strip_components = args.strip_components
@@ -63,21 +64,25 @@ class ExtractMixIn:
                 while dirs and not item.path.startswith(dirs[-1].path):
                     dir_item = dirs.pop(-1)
                     try:
-                        archive.extract_item(dir_item, stdout=stdout)
+                        archive.extract_item(dir_item, stdout=stdout, useop=useop)
                     except BackupOSError as e:
                         self.print_warning("%s: %s", remove_surrogates(dir_item.path), e)
             if output_list:
-                logging.getLogger("borg.output.list").info(remove_surrogates(item.path))
+                if useop:
+                    logging.getLogger("borg.output.list").info(remove_surrogates(item.orig_path))
+                else:
+                    logging.getLogger("borg.output.list").info(remove_surrogates(item.path))
             try:
                 if dry_run:
-                    archive.extract_item(item, dry_run=True, hlm=hlm, pi=pi)
+                    archive.extract_item(item, dry_run=True, hlm=hlm, pi=pi, useop=useop)
                 else:
                     if stat.S_ISDIR(item.mode):
                         dirs.append(item)
-                        archive.extract_item(item, stdout=stdout, restore_attrs=False)
+                        archive.extract_item(item, stdout=stdout, restore_attrs=False, useop=useop)
                     else:
                         archive.extract_item(
-                            item, stdout=stdout, sparse=sparse, hlm=hlm, pi=pi, continue_extraction=continue_extraction
+                            item, stdout=stdout, sparse=sparse, hlm=hlm, pi=pi,
+                            continue_extraction=continue_extraction, useop=useop
                         )
             except (BackupOSError, BackupError) as e:
                 self.print_warning("%s: %s", remove_surrogates(orig_path), e)
@@ -93,7 +98,7 @@ class ExtractMixIn:
                 pi.show()
                 dir_item = dirs.pop(-1)
                 try:
-                    archive.extract_item(dir_item, stdout=stdout)
+                    archive.extract_item(dir_item, stdout=stdout, useop=useop)
                 except BackupOSError as e:
                     self.print_warning("%s: %s", remove_surrogates(dir_item.path), e)
         for pattern in matcher.get_unmatched_include_patterns():
@@ -160,6 +165,10 @@ class ExtractMixIn:
         )
         subparser.add_argument("--noacls", dest="noacls", action="store_true", help="do not extract/set ACLs")
         subparser.add_argument("--noxattrs", dest="noxattrs", action="store_true", help="do not extract/set xattrs")
+        subparser.add_argument(
+            "--use-original-path", dest="useop", action="store_true",
+            help="extract the content back to its original path where it was backup from"
+        )
         subparser.add_argument(
             "--stdout", dest="stdout", action="store_true", help="write all extracted data to stdout"
         )
